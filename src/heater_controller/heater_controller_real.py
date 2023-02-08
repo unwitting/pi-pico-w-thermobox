@@ -1,4 +1,4 @@
-import digitalio
+import digitalio  # type: ignore
 from .heater_controller import HeaterController
 
 

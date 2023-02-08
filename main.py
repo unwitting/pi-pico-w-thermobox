@@ -1,7 +1,7 @@
-import board
-import busio
-import adafruit_ahtx0
-import adafruit_logging as logging
+import board  # type: ignore
+import busio  # type: ignore
+import adafruit_ahtx0  # type: ignore
+import adafruit_logging as logging  # type: ignore
 
 from src.heater_controller.heater_controller_real import HeaterControllerReal
 from src.thermobox_controller import ThermoboxController
