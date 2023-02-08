@@ -16,6 +16,7 @@ fi
 
 echo "Removing old files..."
 rm -f "$CIRCUITPY_VOLUME"/code.py
+rm -f "$CIRCUITPY_VOLUME"/main.py
 
 if [ $SKIP_LIBS -eq 0 ]; then
     echo "  Removing libraries..."
@@ -25,8 +26,8 @@ else
 fi
 
 echo "Copying new files..."
-echo "  Copying code.py..."
-cp code.py "$CIRCUITPY_VOLUME/code.py"
+echo "  Copying main.py..."
+cp main.py "$CIRCUITPY_VOLUME/main.py"
 
 if [ $SKIP_LIBS -eq 0 ]; then
     echo "  Copying Adafruit libraries..."
