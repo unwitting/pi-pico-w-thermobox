@@ -2,8 +2,8 @@ import board  # type: ignore
 import busio  # type: ignore
 import adafruit_ahtx0  # type: ignore
 
-from src.heater_controller.heater_controller_real import HeaterControllerReal
-from src.thermobox_controller import ThermoboxController
+from src.heater_controller.heater_controller_real import HeaterControllerReal  # type: ignore
+from src.thermobox_controller import ThermoboxController  # type: ignore
 
 SDA = board.GP0
 SCL = board.GP1
