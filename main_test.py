@@ -10,13 +10,18 @@ from lib.src.thermobox_controller import ThermoboxController
 from lib.src.interface_controller.interface_controller_mocked import (
     InterfaceControllerMocked,
 )
+from lib.src.temperature_storage_controller.temperature_storage_controller import (
+    TemperatureStorageController,
+)
 
 thermobox_controller = ThermoboxController(
     aht20_sensor=TestSensor(temperature=20.0),
     heater_controller=HeaterController(),
-    interface_controller=InterfaceControllerMocked(logger=DebugLogger()),
-    logger=NoLogger(),
-    target_temperature=40.0,
+    interface_controller=InterfaceControllerMocked(logger=NoLogger()),
+    temperature_storage_controller=TemperatureStorageController(
+        "./target_temperature.test.txt", "./fs_test.test.txt", logger=InfoLogger()
+    ),
+    logger=InfoLogger(),
     temperature_wobble=0.1,
 )
 

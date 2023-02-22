@@ -213,9 +213,7 @@ class InterfaceController:
                             )
                         ]
                     )
-                    self.logger.info("BLOCKING")
                     self.animator.block()
-                    self.logger.info("UNBLOCKED")
                     self.set_key_by_code(
                         pressed_code, Color.GREY, turn_off_others=False
                     )

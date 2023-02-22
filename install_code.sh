@@ -14,6 +14,9 @@ rm -f "$CIRCUITPY_VOLUME"/main.py
 rm -rf "$CIRCUITPY_VOLUME"/lib
 
 echo "Copying new files..."
+echo "  Copying boot.py..."
+cp boot.py "$CIRCUITPY_VOLUME/boot.py"
+
 echo "  Copying main.py..."
 cp main.py "$CIRCUITPY_VOLUME/main.py"
 
