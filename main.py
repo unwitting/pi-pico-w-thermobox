@@ -27,7 +27,7 @@ sensor = adafruit_ahtx0.AHTx0(i2c)
 
 
 heater_controller = HeaterControllerReal(board.LED, board.GP28)
-interface_controller = InterfaceController(keypad=keypad, logger=DebugLogger())
+interface_controller = InterfaceController(keypad=keypad, logger=InfoLogger())
 thermobox_controller = ThermoboxController(
     aht20_sensor=sensor,
     heater_controller=heater_controller,
