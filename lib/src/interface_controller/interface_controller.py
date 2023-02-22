@@ -177,7 +177,6 @@ class InterfaceController:
                 self.target_temperature_input_in_progress = ""
                 self.animator.interrupt()
                 self.turn_all_keys_off()
-                self.set_key_by_code(pressed_code, Color.WHITE, turn_off_others=False)
                 self.set_key_by_code(
                     KEY_END_TEMPERATURE_INPUT, Color.ORANGE, turn_off_others=False
                 )
@@ -250,7 +249,7 @@ class InterfaceController:
             # Have we run out of time?
             if time.monotonic() > self.target_temperature_input_reset_time:
                 self.logger.debug("Target temperature input timed out")
-                self.mode = Mode.TEMPERATURE_DISPLAY
+                self.mode = Mode.TARGET_TEMPERATURE_DISPLAY
                 self.target_temperature_input = ""
             return
 
