@@ -229,7 +229,7 @@ class InterfaceController:
                         self.target_temperature_input_in_progress
                     )
                     self.target_temperature_input_reset_time = None
-                    self.mode = Mode.TEMPERATURE_DISPLAY
+                    self.mode = Mode.TARGET_TEMPERATURE_DISPLAY
                     self.animator.interrupt()
                     self.animator.queue_animation(
                         [
@@ -249,7 +249,7 @@ class InterfaceController:
             # Have we run out of time?
             if time.monotonic() > self.target_temperature_input_reset_time:
                 self.logger.debug("Target temperature input timed out")
-                self.mode = Mode.TARGET_TEMPERATURE_DISPLAY
+                self.mode = Mode.TEMPERATURE_DISPLAY
                 self.target_temperature_input = ""
             return
 
