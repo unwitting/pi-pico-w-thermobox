@@ -176,6 +176,7 @@ class InterfaceController:
                 self.mode = Mode.TARGET_TEMPERATURE_INPUT
                 self.target_temperature_input_in_progress = ""
                 self.animator.interrupt()
+                self.turn_all_keys_off()
                 self.set_key_by_code(pressed_code, Color.WHITE, turn_off_others=False)
                 self.set_key_by_code(
                     KEY_END_TEMPERATURE_INPUT, Color.ORANGE, turn_off_others=False
