@@ -18,8 +18,8 @@ keypad = PMK(keypad_hardware)
 # sensor = adafruit_ahtx0.AHTx0(i2c)
 
 # I2C1
-SDA = board.GP2
-SCL = board.GP3
+SDA = board.GP10
+SCL = board.GP11
 i2c = busio.I2C(SCL, SDA)
 sensor = adafruit_ahtx0.AHTx0(i2c)
 

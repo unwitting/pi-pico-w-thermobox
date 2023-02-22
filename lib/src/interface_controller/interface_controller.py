@@ -14,11 +14,20 @@ CYCLE_ORDER = [c for c in "0123456789ABCDEF"]
 
 
 class Mode:
-    TEMPERATURE_DISPLAY = "temperature"
-    HEATING_OR_COOLING_DISPLAY = "heating-or-cooling"
+    TEMPERATURE_DISPLAY = "temperature-display"
+    TARGET_TEMPERATURE_DISPLAY = "target-temperature-display"
+    HEATING_OR_COOLING_DISPLAY = "heating-or-cooling-display"
+    TARGET_TEMPERATURE_INPUT = "target-temperature-input"
 
 
-MODE_CYCLE_ORDER = [Mode.TEMPERATURE_DISPLAY, Mode.HEATING_OR_COOLING_DISPLAY]
+DISPLAY_MODES_CYCLE_ORDER = [
+    Mode.TEMPERATURE_DISPLAY,
+    Mode.TARGET_TEMPERATURE_DISPLAY,
+    Mode.HEATING_OR_COOLING_DISPLAY,
+]
+
+KEY_BEGIN_TEMPERATURE_INPUT = "C"
+KEY_END_TEMPERATURE_INPUT = "D"
 
 
 class Animator:
@@ -36,6 +45,11 @@ class Animator:
         while not self.idle():
             self.update()
         self.logger.debug("Animator block finished")
+
+    def interrupt(self):
+        self.logger.debug("Animator interrupting")
+        self.queue = []
+        self.now_playing = None
 
     # Item format is (action, duration_s, {args})
     def queue_animation(self, items):
@@ -110,9 +124,13 @@ class InterfaceController:
         self.keypad = keypad
         self.logger = logger
         self.animator = Animator(self, logger)
-        self.mode = MODE_CYCLE_ORDER[0]
+        self.mode = DISPLAY_MODES_CYCLE_ORDER[0]
+        self.target_temperature_input = ""
+        self.target_temperature_input_in_progress = ""
+        self.target_temperature_input_reset_time = None
 
         self.display_temperature = None
+        self.display_target_temperature = None
         self.display_heating = None
 
         self.logger.info("Initializing interface controller")
@@ -127,8 +145,19 @@ class InterfaceController:
     def _get_key(self, key_code):
         return self.keypad.keys[KEY_ORDER.index(key_code)]
 
+    def _get_pressed_key(self):
+        for key_char in CYCLE_ORDER:
+            key = self._get_key(key_char)
+            if key.pressed:
+                self.logger.debug(f"Key {key_char} is pressed")
+                return key_char, key
+        return None, None
+
     def set_display_temperature(self, temperature_str):
         self.display_temperature = temperature_str
+
+    def set_display_target_temperature(self, temperature_str):
+        self.display_target_temperature = temperature_str
 
     def set_display_heating(self, heating):
         self.display_heating = heating
@@ -137,12 +166,107 @@ class InterfaceController:
         self.keypad.update()
         self.animator.update()
 
+        # Check for input
+        pressed_code, pressed_key = self._get_pressed_key()
+        if pressed_key:
+            if (
+                pressed_code == KEY_BEGIN_TEMPERATURE_INPUT
+                and self.mode in DISPLAY_MODES_CYCLE_ORDER
+            ):
+                self.mode = Mode.TARGET_TEMPERATURE_INPUT
+                self.target_temperature_input_in_progress = ""
+                self.animator.interrupt()
+                self.set_key_by_code(pressed_code, Color.WHITE, turn_off_others=False)
+                self.set_key_by_code(
+                    KEY_END_TEMPERATURE_INPUT, Color.ORANGE, turn_off_others=False
+                )
+                self.target_temperature_input_reset_time = time.monotonic() + 10
+
+        # Are we in an input mode?
+        if self.mode == Mode.TARGET_TEMPERATURE_INPUT:
+            pressed_code, pressed_key = self._get_pressed_key()
+            # Handle temp input
+            if pressed_key:
+                if pressed_code in "0123456789F":
+                    self.target_temperature_input_in_progress += (
+                        pressed_code
+                        if pressed_code in "0123456789"
+                        else "."
+                        if pressed_code == "F"
+                        else ""
+                    )
+                    self.target_temperature_input_reset_time = time.monotonic() + 10
+                    self.logger.info(
+                        f"Target temperature input: {self.target_temperature_input_in_progress}"
+                    )
+                    ## TODO WERE HERE
+                    self.animator.queue_animation(
+                        [
+                            (
+                                "set_key",
+                                0.3,
+                                {
+                                    "key_code": pressed_code,
+                                    "color": Color.BLUE,
+                                    "turn_off_others": False,
+                                },
+                            )
+                        ]
+                    )
+                    self.logger.info("BLOCKING")
+                    self.animator.block()
+                    self.logger.info("UNBLOCKED")
+                    self.set_key_by_code(
+                        pressed_code, Color.GREY, turn_off_others=False
+                    )
+
+                # Handle commit of temperature
+                if pressed_code == KEY_END_TEMPERATURE_INPUT:
+                    self.logger.debug(
+                        f"Committing target temperature input: {self.target_temperature_input}"
+                    )
+                    self.target_temperature_input = (
+                        self.target_temperature_input_in_progress
+                    )
+                    self.target_temperature_input_reset_time = None
+                    self.mode = Mode.TEMPERATURE_DISPLAY
+                    self.animator.interrupt()
+                    self.animator.queue_animation(
+                        [
+                            (
+                                "set_key",
+                                0.8,
+                                {
+                                    "key_code": KEY_END_TEMPERATURE_INPUT,
+                                    "color": Color.GREEN,
+                                },
+                            ),
+                            ("turn_all_keys_off", None, {}),
+                        ]
+                    )
+                    return
+
+            # Have we run out of time?
+            if time.monotonic() > self.target_temperature_input_reset_time:
+                self.logger.debug("Target temperature input timed out")
+                self.mode = Mode.TEMPERATURE_DISPLAY
+                self.target_temperature_input = ""
+            return
+
+        # Only reach here once we're back in a display mode
+
         # In normal operation, if there's nothing else going on then display
         # whatever's needed for the current mode, and cycle the mode
         if self.animator.idle():
             self.logger.debug(f"Interface controller idle, displaying mode {self.mode}")
             if self.mode == Mode.TEMPERATURE_DISPLAY and self.display_temperature:
-                self.display_text(self.display_temperature, block=False)
+                self.display_text(self.display_temperature)
+
+            elif (
+                self.mode == Mode.TARGET_TEMPERATURE_DISPLAY
+                and self.display_target_temperature
+            ):
+                self.display_text(self.display_target_temperature, color=Color.ORANGE)
 
             elif (
                 self.mode == Mode.HEATING_OR_COOLING_DISPLAY
@@ -161,15 +285,19 @@ class InterfaceController:
                         )
                     )
 
-            self.animator.queue_animation([("wait", 5, {})])
-            self.mode = MODE_CYCLE_ORDER[
-                (MODE_CYCLE_ORDER.index(self.mode) + 1) % len(MODE_CYCLE_ORDER)
+            # Did we do anything? Look at the animator queue and see if it's now doing something
+            if not self.animator.idle():
+                self.animator.queue_animation([("wait", 5, {})])
+
+            self.mode = DISPLAY_MODES_CYCLE_ORDER[
+                (DISPLAY_MODES_CYCLE_ORDER.index(self.mode) + 1)
+                % len(DISPLAY_MODES_CYCLE_ORDER)
             ]
             self.logger.debug(f"Interface controller mode cycled to {self.mode}")
 
-    def display_text(self, text, block=False):
+    def display_text(self, text, color=Color.WHITE, block=False):
         self.logger.info(f"Displaying text: {text}")
-        self.animator.queue_animation(TEXT_ANIMATION(text, 0.75, Color.WHITE))
+        self.animator.queue_animation(TEXT_ANIMATION(text, 0.75, color=color))
         if block:
             self.animator.block()
 

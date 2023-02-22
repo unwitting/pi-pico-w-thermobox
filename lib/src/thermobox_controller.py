@@ -12,17 +12,29 @@ class ThermoboxController:
         self.heater_controller = heater_controller
         self.interface_controller = interface_controller
         self.logger = logger
-        self.target_temperature = target_temperature
         self.temperature_wobble = temperature_wobble
-        self.temperature_range = [
-            target_temperature,
-            target_temperature + temperature_wobble,
-        ]
-
         self.heater_controller.off(self.logger)
+
+        self._set_target_temperature(target_temperature)
+
+    def _set_target_temperature(self, new_target_temperature):
+        self.logger.info("New target temperature: %0.1fC" % new_target_temperature)
+        self.target_temperature = new_target_temperature
+        self.temperature_range = [
+            self.target_temperature,
+            self.target_temperature + self.temperature_wobble,
+        ]
+        self.interface_controller.set_display_target_temperature(
+            "%.1f" % self.target_temperature
+        )
 
     def loop_step(self):
         self.interface_controller.update()
+
+        # Does the interface want to tell us a new target temperature?
+        new_target_temperature = self.interface_controller.target_temperature_input
+        if new_target_temperature:
+            self._set_target_temperature(float(new_target_temperature))
 
         temperature = self.aht20_sensor.temperature
         self.logger.debug("Temperature: %0.3f C" % temperature)

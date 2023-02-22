@@ -9,6 +9,10 @@ class KeypadMock:
         def set_led(self, r, g, b):
             pass
 
+        @property
+        def pressed(self):
+            return False
+
     def __init__(self):
         self.keys = [self.KeyMock() for _ in range(16)]
 
