@@ -11,19 +11,12 @@ from src.loggers import DebugLogger, InfoLogger  # type: ignore
 
 keypad_hardware = RGBKeypadBase()
 keypad = PMK(keypad_hardware)
-## I2C0
-# SDA = board.GP0
-# SCL = board.GP1
-# i2c = busio.I2C(SCL, SDA)
-# sensor = adafruit_ahtx0.AHTx0(i2c)
 
 # I2C1
 SDA = board.GP10
 SCL = board.GP11
 i2c = busio.I2C(SCL, SDA)
 sensor = adafruit_ahtx0.AHTx0(i2c)
-
-# sensor = adafruit_ahtx0.AHTx0(keypad_hardware.i2c())
 
 
 heater_controller = HeaterControllerReal(board.LED, board.GP28)
